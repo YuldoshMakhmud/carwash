@@ -1,110 +1,74 @@
-import 'package:carwash/models/data_models.dart';
+import 'package:carwash/models/app_state.dart';
 import 'package:carwash/views/service_page/service_list.dart';
 import 'package:carwash/views/service_page/pricing_table.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _editMode = false;
+  final AppState _appState = AppState();
+
+  void _toggleEditMode() => setState(() => _editMode = !_editMode);
+
+  void _editCategory(int index) {
+    final cat = _appState.categories[index];
+    final nameCtrl = TextEditingController(text: cat.name);
+    final imageCtrl = TextEditingController(text: cat.imageUrl);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CategoryEditSheet(
+        nameCtrl: nameCtrl,
+        imageCtrl: imageCtrl,
+        onSave: () {
+          _appState.updateCategory(
+            index,
+            ServiceCategoryData(
+              name: nameCtrl.text.trim(),
+              icon: cat.icon,
+              imageUrl: imageCtrl.text.trim(),
+              services: cat.services,
+            ),
+          );
+          setState(() {});
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final categories = [
-      ServiceCategory(
-        name: '현장 외부 세차',
-        icon: Icons.directions_car_filled,
-        services: [
-          Service(
-            name: '기본 외부 세차',
-            price: '100,000원',
-            description: '아파트 현장에서 진행되는 기본 외부 세차',
-          ),
-          Service(
-            name: '프리미엄 외부 세차',
-            price: '115,000원',
-            description: '광택 마무리가 포함된 외부 세차',
-          ),
-          Service(
-            name: '디럭스 외부 세차',
-            price: '130,000원',
-            description: '휠 및 하부까지 포함된 고급 외부 세차',
-          ),
-        ],
-      ),
-      ServiceCategory(
-        name: '현장 실내 케어',
-        icon: Icons.event_seat,
-        services: [
-          Service(
-            name: '실내 진공 청소',
-            price: '100,000원',
-            description: '차량 내부 전체 진공 청소',
-          ),
-          Service(
-            name: '실내 딥 클리닝',
-            price: '120,000원',
-            description: '시트와 바닥을 포함한 실내 집중 클리닝',
-          ),
-          Service(
-            name: '가죽 시트 케어',
-            price: '130,000원',
-            description: '가죽 시트를 위한 전문 케어 서비스',
-          ),
-        ],
-      ),
-      ServiceCategory(
-        name: '현장 종합 케어',
-        icon: Icons.auto_awesome,
-        services: [
-          Service(
-            name: '익스프레스 종합 케어',
-            price: '110,000원',
-            description: '외부와 실내를 빠르게 관리하는 서비스',
-          ),
-          Service(
-            name: '풀 패키지 케어',
-            price: '130,000원',
-            description: '외부 및 실내 전체 관리 서비스',
-          ),
-          Service(
-            name: '도장 광택 케어',
-            price: '125,000원',
-            description: '차량 도장면 광택 및 컨디션 개선',
-          ),
-        ],
-      ),
-      ServiceCategory(
-        name: '프리미엄 현장 서비스',
-        icon: Icons.workspace_premium,
-        services: [
-          Service(
-            name: '세라믹 보호 코팅',
-            price: '130,000원',
-            description: '차량 도장면을 보호하는 세라믹 코팅',
-          ),
-          Service(
-            name: '엔진룸 클리닝',
-            price: '120,000원',
-            description: '엔진룸 안전 클리닝 서비스',
-          ),
-          Service(
-            name: '헤드라이트 복원',
-            price: '100,000원',
-            description: '탁해진 헤드라이트 투명도 복원',
-          ),
-        ],
-      ),
-    ];
-
-    // Category images for network loading
-    final categoryImages = [
-      'https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=400&h=400&fit=crop', // 외부 세차
-      'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=400&h=400&fit=crop', // 실내 케어
-      'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&h=400&fit=crop', // 종합 케어
-      'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=400&fit=crop', // 프리미엄 서비스
-    ];
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Car Wash Services'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Car Wash Services'),
+        centerTitle: true,
+        actions: [
+          TextButton.icon(
+            onPressed: _toggleEditMode,
+            icon: Icon(
+              _editMode ? Icons.check_circle : Icons.edit,
+              color: _editMode ? Colors.green : Colors.red,
+              size: 18,
+            ),
+            label: Text(
+              _editMode ? 'Tayyor' : 'Edit',
+              style: TextStyle(
+                color: _editMode ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -123,7 +87,27 @@ class HomePage extends StatelessWidget {
               'Browse our professional car care services',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
-            const SizedBox(height: 24),
+            if (_editMode)
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange.shade700, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Kartani bosib kategoriyani tahrirlang',
+                      style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -132,13 +116,9 @@ class HomePage extends StatelessWidget {
                   mainAxisSpacing: 16,
                   childAspectRatio: 0.85,
                 ),
-                itemCount: categories.length,
+                itemCount: _appState.categories.length,
                 itemBuilder: (context, index) {
-                  return _buildCategoryCard(
-                    context,
-                    categories[index],
-                    categoryImages[index],
-                  );
+                  return _buildCategoryCard(context, _appState.categories[index], index);
                 },
               ),
             ),
@@ -162,25 +142,28 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryCard(
-    BuildContext context,
-    ServiceCategory category,
-    String imageUrl,
-  ) {
+  Widget _buildCategoryCard(BuildContext context, ServiceCategoryData category, int index) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ServiceListPage(category: category),
-          ),
-        );
+        if (_editMode) {
+          _editCategory(index);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ServiceListPage(categoryIndex: index),
+            ),
+          ).then((_) => setState(() {}));
+        }
       },
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(
+            color: _editMode ? Colors.red.withOpacity(0.4) : Colors.grey.shade200,
+            width: _editMode ? 1.5 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.1),
@@ -204,16 +187,12 @@ class HomePage extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     Image.network(
-                      imageUrl,
+                      category.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: Colors.red.withOpacity(0.1),
-                          child: Icon(
-                            category.icon,
-                            size: 50,
-                            color: Colors.red,
-                          ),
+                          child: Icon(category.icon, size: 50, color: Colors.red),
                         );
                       },
                       loadingBuilder: (context, child, loadingProgress) {
@@ -221,15 +200,11 @@ class HomePage extends StatelessWidget {
                         return Container(
                           color: Colors.grey.shade200,
                           child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.red,
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(color: Colors.red, strokeWidth: 2),
                           ),
                         );
                       },
                     ),
-                    // Gradient overlay for better text readability
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -242,6 +217,13 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (_editMode)
+                      Container(
+                        color: Colors.black.withOpacity(0.25),
+                        child: const Center(
+                          child: Icon(Icons.edit, color: Colors.white, size: 28),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -257,7 +239,7 @@ class HomePage extends StatelessWidget {
                       category.name,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
@@ -265,15 +247,163 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${category.services.length}개 서비스',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ======== Category Edit Sheet ========
+class _CategoryEditSheet extends StatefulWidget {
+  final TextEditingController nameCtrl;
+  final TextEditingController imageCtrl;
+  final VoidCallback onSave;
+
+  const _CategoryEditSheet({
+    required this.nameCtrl,
+    required this.imageCtrl,
+    required this.onSave,
+  });
+
+  @override
+  State<_CategoryEditSheet> createState() => _CategoryEditSheetState();
+}
+
+class _CategoryEditSheetState extends State<_CategoryEditSheet> {
+  String _previewUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _previewUrl = widget.imageCtrl.text;
+    widget.imageCtrl.addListener(() {
+      setState(() => _previewUrl = widget.imageCtrl.text);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Kategoriyani tahrirlash',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            if (_previewUrl.isNotEmpty)
+              Container(
+                height: 150,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    _previewUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey.shade100,
+                      child: const Icon(Icons.broken_image, color: Colors.grey, size: 50),
+                    ),
+                  ),
+                ),
+              ),
+
+            const Text('Kategoriya nomi', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: widget.nameCtrl,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.category_outlined, color: Colors.grey.shade400, size: 20),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            const Text('Rasm URL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: widget.imageCtrl,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.image_outlined, color: Colors.grey.shade400, size: 20),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.red, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: widget.onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                child: const Text('Saqlash', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

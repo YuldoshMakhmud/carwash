@@ -1,4 +1,4 @@
-import 'package:carwash/views/homepage.dart';
+import 'package:carwash/views/auth/login_page.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -163,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _navigateToHome() {
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
   }
 }
 
